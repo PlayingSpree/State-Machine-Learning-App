@@ -22,7 +22,6 @@ public class StateMachineData
         states.Add(new State("S0", 0, Vector2.left * 1.5f));
         states.Add(new State("S1", 1, Vector2.right * 1.5f));
         transitions.Add(new Transition(0, 1, 0, 0));
-        transitions.Add(new Transition(0, 1, 1, 1));
         inputs.Add(0);
         initialState = 0;
     }

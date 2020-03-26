@@ -6,18 +6,15 @@ using TMPro;
 public class StateMachineController : MonoBehaviour
 {
     // Data
-    StateMachineData stateMachineData = new StateMachineData();
+    public StateMachineData stateMachineData = new StateMachineData();
 
     // Drawn Obj
     Dictionary<StateMachineData.State, GameObject> drawnStates = new Dictionary<StateMachineData.State, GameObject>();
-    List<GameObject> drawnTransitions = new List<GameObject>();
+    List<TransitionPrefab> drawnTransitions = new List<TransitionPrefab>();
 
     // Prefab
     public GameObject statePrefab;
     public GameObject transitionPrefab;
-
-    // Reference
-    public Transform camPos;
 
     private void Start()
     {
@@ -25,8 +22,7 @@ public class StateMachineController : MonoBehaviour
         stateMachineData.states.ForEach(DrawState);
         DrawTransitions();
     }
-
-    private void DrawState(StateMachineData.State state)
+    public void DrawState(StateMachineData.State state)
     {
         // Draw
         GameObject o = Instantiate(statePrefab);
@@ -47,10 +43,11 @@ public class StateMachineController : MonoBehaviour
         }
     }
 
-    private void DrawTransitions()
+    public void DrawTransitions()
     {
         // Remove old
-        drawnTransitions.ForEach(Destroy);
+        drawnTransitions.ForEach(x => Destroy(x.gameObject));
+        drawnTransitions.Clear();
 
         // Copy of all transitions to draw
         List<StateMachineData.Transition> transitions = new List<StateMachineData.Transition>(stateMachineData.transitions);
@@ -71,32 +68,24 @@ public class StateMachineController : MonoBehaviour
 
             // Set & Add Text
             TransitionPrefab t = o.GetComponent<TransitionPrefab>();
-            t.set(startPos, endPos, stateMachineData.InputToString(sameTransition[0].input));
+            t.set(startPos, endPos, stateMachineData.InputToString(sameTransition[0].input), sameTransition[0].from, sameTransition[0].to);
             sameTransition.RemoveAt(0);
             foreach (StateMachineData.Transition item in sameTransition)
             {
                 t.AddText(stateMachineData.InputToString(item.input));
             }
 
-            drawnTransitions.Add(o);
+            drawnTransitions.Add(t);
         }
     }
 
-    private void CreateState(Vector2 pos)
+    public StateMachineData.State SelectState(Vector2 pos)
     {
-        DrawState(stateMachineData.CreateState("S" + (stateMachineData.states.Count + 1), pos));
+        return stateMachineData.states.Find(x => Vector2.Distance(x.pos, pos) < Appdata.circleSize);
     }
 
-    private void ModifyState(int id, Vector2 pos, string name = "")
+    public TransitionPrefab SelectTransition(Vector2 pos)
     {
-        StateMachineData.State s = stateMachineData.ModifyState(id, pos, name);
-        DrawState(s);
-        DrawTransitions();
-    }
-
-    private void ModifyState(int id, string name)
-    {
-        stateMachineData.ModifyState(id, name);
-        DrawState(stateMachineData.states.Find(x => x.id == id));
+        return drawnTransitions.Find(x => x.coll.OverlapPoint(pos));
     }
 }
