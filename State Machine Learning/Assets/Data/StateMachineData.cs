@@ -19,9 +19,10 @@ public class StateMachineData
     {
         inputsData.Add(new Input("A", 0));
         inputsData.Add(new Input("B", 1));
-        states.Add(new State("S1", 0, Vector2.left * 1.5f));
-        states.Add(new State("S2", 1, Vector2.right * 1.5f));
+        states.Add(new State("S0", 0, Vector2.left * 1.5f));
+        states.Add(new State("S1", 1, Vector2.right * 1.5f));
         transitions.Add(new Transition(0, 1, 0, 0));
+        transitions.Add(new Transition(0, 1, 1, 1));
         inputs.Add(0);
         initialState = 0;
     }
@@ -51,23 +52,26 @@ public class StateMachineData
     // State Machine Function
     public State CreateState(string name, Vector2 pos)
     {
-        int id = states.Count == 0 ? 0 : states[states.Count - 1].id++;
+        int id = states.Count == 0 ? 0 : states[states.Count - 1].id + 1;
         State s = new State(name, id, pos);
         states.Add(s);
+        Debug.Log(id);
         return s;
     }
 
-    public void ModifyState(int id, Vector2 pos, string name = "")
+    public State ModifyState(int id, Vector2 pos, string name = "")
     {
-        State obj = states.Find(x => x.id == id);
-        obj.name = name == "" ? obj.name : name;
-        obj.pos = pos;
+        State s = states.Find(x => x.id == id);
+        s.name = name == "" ? s.name : name;
+        s.pos = pos;
+        return s;
     }
 
-    public void ModifyState(int id, string name)
+    public State ModifyState(int id, string name)
     {
-        State obj = states.Find(x => x.id == id);
-        obj.name = name;
+        State s = states.Find(x => x.id == id);
+        s.name = name;
+        return s;
     }
 
     public void RemoveState(int id)
@@ -116,6 +120,11 @@ public class StateMachineData
     {
         // Remove Input
         inputs.RemoveAt(index);
+    }
+
+    public string InputToString(int id)
+    {
+        return inputsData.Find(x => x.id == id).name;
     }
 
     // State Machine Class

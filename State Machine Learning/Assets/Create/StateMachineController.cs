@@ -10,7 +10,7 @@ public class StateMachineController : MonoBehaviour
 
     // Drawn Obj
     Dictionary<StateMachineData.State, GameObject> drawnStates = new Dictionary<StateMachineData.State, GameObject>();
-    Dictionary<StateMachineData.Transition, GameObject> drawnTransitions = new Dictionary<StateMachineData.Transition, GameObject>();
+    List<GameObject> drawnTransitions = new List<GameObject>();
 
     // Prefab
     public GameObject statePrefab;
@@ -23,14 +23,14 @@ public class StateMachineController : MonoBehaviour
     {
         // Draw all
         stateMachineData.states.ForEach(DrawState);
-        stateMachineData.transitions.ForEach(DrawTransition);
+        DrawTransitions();
     }
 
     private void DrawState(StateMachineData.State state)
     {
         // Draw
         GameObject o = Instantiate(statePrefab);
-        o.transform.position = state.pos;
+        o.transform.position = (Vector3)state.pos + (Vector3.back * state.id);
         TMP_Text t = o.GetComponentInChildren<TMP_Text>();
         t.SetText(state.name);
 
@@ -47,25 +47,38 @@ public class StateMachineController : MonoBehaviour
         }
     }
 
-    private void DrawTransition(StateMachineData.Transition transition)
+    private void DrawTransitions()
     {
-        // Draw
-        GameObject o = Instantiate(transitionPrefab);
-        Vector2 startPos = stateMachineData.states.Find(x => x.id == transition.from).pos;
-        Vector2 endPos = stateMachineData.states.Find(x => x.id == transition.to).pos;
-        o.transform.position = Vector3.zero;
-        o.GetComponent<TransitionPrefab>().set(startPos, endPos, transition.input.ToString());
+        // Remove old
+        drawnTransitions.ForEach(Destroy);
 
-        // Remove old and add new obj to list
-        GameObject old;
-        if (drawnTransitions.TryGetValue(transition, out old))
+        // Copy of all transitions to draw
+        List<StateMachineData.Transition> transitions = new List<StateMachineData.Transition>(stateMachineData.transitions);
+
+        while (transitions.Count > 0)
         {
-            Destroy(old);
-            drawnTransitions[transition] = o;
-        }
-        else
-        {
-            drawnTransitions.Add(transition, o);
+            // Stack same transition with other transitions
+            List<StateMachineData.Transition> sameTransition = transitions.FindAll(x => x.from == transitions[0].from && x.to == transitions[0].to);
+            transitions.RemoveAll(x => sameTransition.Contains(x));
+
+            // Draw
+            GameObject o = Instantiate(transitionPrefab);
+            o.transform.position = Vector3.zero;
+
+            // Pos
+            Vector2 startPos = stateMachineData.states.Find(x => x.id == sameTransition[0].from).pos;
+            Vector2 endPos = stateMachineData.states.Find(x => x.id == sameTransition[0].to).pos;
+
+            // Set & Add Text
+            TransitionPrefab t = o.GetComponent<TransitionPrefab>();
+            t.set(startPos, endPos, stateMachineData.InputToString(sameTransition[0].input));
+            sameTransition.RemoveAt(0);
+            foreach (StateMachineData.Transition item in sameTransition)
+            {
+                t.AddText(stateMachineData.InputToString(item.input));
+            }
+
+            drawnTransitions.Add(o);
         }
     }
 
@@ -76,26 +89,14 @@ public class StateMachineController : MonoBehaviour
 
     private void ModifyState(int id, Vector2 pos, string name = "")
     {
-        stateMachineData.ModifyState(id, pos, name);
-        DrawState(stateMachineData.states.Find(x => x.id == id));
-
-        // Redraw all relate transitions
-        stateMachineData.transitions.FindAll(x => x.from == id || x.to == id).ForEach(DrawTransition);
+        StateMachineData.State s = stateMachineData.ModifyState(id, pos, name);
+        DrawState(s);
+        DrawTransitions();
     }
 
     private void ModifyState(int id, string name)
     {
         stateMachineData.ModifyState(id, name);
         DrawState(stateMachineData.states.Find(x => x.id == id));
-    }
-
-    public void CreateStateButton()
-    {
-        CreateState(camPos.position);
-    }
-
-    public void EditButton()
-    {
-        ModifyState(0, Vector2.up);
     }
 }
