@@ -81,11 +81,39 @@ public class StateMachineController : MonoBehaviour
 
     public StateMachineData.State SelectState(Vector2 pos)
     {
-        return stateMachineData.states.Find(x => Vector2.Distance(x.pos, pos) < Appdata.circleSize);
+        StateMachineData.State s = stateMachineData.states.FindLast(x => Vector2.Distance(x.pos, pos) < Appdata.circleSize);
+        if (s == null)
+        {
+            return null;
+        }
+        // Change Color
+        GameObject g = drawnStates[s];
+        g.GetComponent<SpriteRenderer>().color = Appdata.highlightColor;
+        g.GetComponentInChildren<TMP_Text>().color = Appdata.highlightColor;
+        return s;
+    }
+
+    public void DeselectState(StateMachineData.State s)
+    {
+        if (s == null)
+        {
+            return;
+        }
+        GameObject g = drawnStates[s];
+        g.GetComponent<SpriteRenderer>().color = Color.black;
+        g.GetComponentInChildren<TMP_Text>().color = Color.black;
     }
 
     public TransitionPrefab SelectTransition(Vector2 pos)
     {
         return drawnTransitions.Find(x => x.coll.OverlapPoint(pos));
+    }
+
+    public void DeselectTransition(TransitionPrefab t)
+    {
+        if (t == null)
+        {
+            return;
+        }
     }
 }

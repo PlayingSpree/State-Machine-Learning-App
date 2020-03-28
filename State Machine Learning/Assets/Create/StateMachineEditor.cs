@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StateMachineEditor : MonoBehaviour
+public partial class StateMachineEditor : MonoBehaviour
 {
     // Ref
     StateMachineController smc;
+    InputHandler input = new InputHandler();
+    public Animator animator;
+    public TMPro.TMP_Text tooltip;
 
     // UI Ref
     const float canvasBottom = 160f / 1920f;
@@ -24,7 +27,7 @@ public class StateMachineEditor : MonoBehaviour
 
     private void Update()
     {
-        UpdateInput();
+        input.Update();
         switch (editMode)
         {
             case EditMode.Edit:
@@ -48,19 +51,9 @@ public class StateMachineEditor : MonoBehaviour
     // UpdateEdit
     private void UpdateEdit()
     {
-        // Touch
-        if (Input.touchCount > 0)
+        if (input.Tap.HasValue)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-            {
-                SelectThing(touch.position);
-            }
-        }
-        // M+KB
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            SelectThing(Input.mousePosition);
+            SelectThing(input.Tap.Value);
         }
     }
 
@@ -70,8 +63,13 @@ public class StateMachineEditor : MonoBehaviour
         {
             return;
         }
+
+        smc.DeselectState(selectedState);
+        selectedState = null;
+
         Vector2 wp = Camera.main.ScreenToWorldPoint(pos);
         selectedState = smc.SelectState(wp);
+
         if (selectedState == null)
         {
             selectedTransition = smc.SelectTransition(wp);
@@ -81,19 +79,9 @@ public class StateMachineEditor : MonoBehaviour
     // UpdateAddState
     private void UpdateAddState()
     {
-        // Touch
-        if (Input.touchCount > 0)
+        if (input.Tap.HasValue)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-            {
-                ClickCreateState(touch.position);
-            }
-        }
-        // M+KB
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            ClickCreateState(Input.mousePosition);
+            ClickCreateState(input.Tap.Value);
         }
     }
 
@@ -105,25 +93,15 @@ public class StateMachineEditor : MonoBehaviour
         }
         Vector2 wp = Camera.main.ScreenToWorldPoint(pos);
         CreateState(wp);
-        editMode = EditMode.Edit;
+        ChangeEditMode(EditMode.Edit);
     }
 
     // UpdateAddTransition
     private void UpdateAddTransition()
     {
-        // Touch
-        if (Input.touchCount > 0)
+        if (input.Tap.HasValue)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-            {
-                ClickAddTransition(touch.position);
-            }
-        }
-        // M+KB
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            ClickAddTransition(Input.mousePosition);
+            ClickAddTransition(input.Tap.Value);
         }
     }
 
@@ -144,8 +122,9 @@ public class StateMachineEditor : MonoBehaviour
             StateMachineData.State otherState = smc.SelectState(wp);
             if (otherState != null)
             {
-                CreateTransition(selectedState.id,otherState.id,0);
-                editMode = EditMode.Edit;
+                CreateTransition(selectedState.id, otherState.id, 0);
+                smc.DeselectState(otherState);
+                ChangeEditMode(EditMode.Edit);
             }
         }
     }
@@ -167,7 +146,7 @@ public class StateMachineEditor : MonoBehaviour
         smc.DrawState(smc.stateMachineData.ModifyState(id, name));
     }
 
-    private void CreateTransition(int from,int to,int input)
+    private void CreateTransition(int from, int to, int input)
     {
         smc.stateMachineData.CreateTransition(from, to, input);
         smc.DrawTransitions();
@@ -176,16 +155,16 @@ public class StateMachineEditor : MonoBehaviour
     // UI
     public void SelectButton()
     {
-        editMode = EditMode.Edit;
+        ChangeEditMode(EditMode.Edit);
     }
 
     public void StateButton()
     {
-        editMode = EditMode.AddState;
+        ChangeEditMode(EditMode.AddState);
     }
     public void TransitionButton()
     {
-        editMode = EditMode.AddTransition;
+        ChangeEditMode(EditMode.AddTransition);
     }
     public bool IsInCanvas(Vector2 pos)
     {
@@ -199,23 +178,35 @@ public class StateMachineEditor : MonoBehaviour
         }
         return true;
     }
-
-    // Input
-    private void UpdateInput()
+    private void ChangeEditMode(EditMode editMode)
     {
-        // Touch
-        if (Input.touchCount > 0)
+        smc.DeselectState(selectedState);
+        selectedState = null;
+        smc.DeselectTransition(selectedTransition);
+        selectedTransition = null;
+        switch (editMode)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-            {
-                //ClickCreateState(touch.position);
-            }
-        }
-        // M+KB
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            //ClickCreateState(Input.mousePosition);
+            case EditMode.Edit:
+                this.editMode = EditMode.Edit;
+                animator.SetTrigger("Cancle");
+                break;
+            case EditMode.AddState:
+                this.editMode = EditMode.AddState;
+                animator.SetTrigger("AddState");
+                tooltip.SetText("Tap to add a new state.");
+                break;
+            case EditMode.AddTransition:
+                this.editMode = EditMode.AddTransition;
+                animator.SetTrigger("AddTransition");
+                tooltip.SetText("Tap to add a new transition.");
+                break;
+            case EditMode.SelectState:
+                break;
+            case EditMode.SelectTransition:
+                break;
+            default:
+                break;
         }
     }
 }
+

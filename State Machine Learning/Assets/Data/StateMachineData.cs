@@ -54,7 +54,6 @@ public class StateMachineData
         int id = states.Count == 0 ? 0 : states[states.Count - 1].id + 1;
         State s = new State(name, id, pos);
         states.Add(s);
-        Debug.Log(id);
         return s;
     }
 
