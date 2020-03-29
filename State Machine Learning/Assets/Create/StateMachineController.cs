@@ -26,7 +26,7 @@ public class StateMachineController : MonoBehaviour
     {
         // Draw
         GameObject o = Instantiate(statePrefab);
-        o.transform.position = (Vector3)state.pos + (Vector3.back * state.id);
+        o.transform.position = (Vector3)state.pos + (Vector3.back * state.id * 0.01f);
         TMP_Text t = o.GetComponentInChildren<TMP_Text>();
         t.SetText(state.name);
 
@@ -40,6 +40,15 @@ public class StateMachineController : MonoBehaviour
         else
         {
             drawnStates.Add(state, o);
+        }
+    }
+
+    public void UndrawState(StateMachineData.State state)
+    {
+        if (drawnStates.TryGetValue(state, out GameObject g))
+        {
+            Destroy(g);
+            DrawTransitions();
         }
     }
 
@@ -68,7 +77,7 @@ public class StateMachineController : MonoBehaviour
 
             // Set & Add Text
             TransitionPrefab t = o.GetComponent<TransitionPrefab>();
-            t.set(startPos, endPos, stateMachineData.InputToString(sameTransition[0].input), sameTransition[0].from, sameTransition[0].to);
+            t.Set(startPos, endPos, stateMachineData.InputToString(sameTransition[0].input), sameTransition[0]);
             sameTransition.RemoveAt(0);
             foreach (StateMachineData.Transition item in sameTransition)
             {
@@ -90,6 +99,7 @@ public class StateMachineController : MonoBehaviour
         GameObject g = drawnStates[s];
         g.GetComponent<SpriteRenderer>().color = Appdata.highlightColor;
         g.GetComponentInChildren<TMP_Text>().color = Appdata.highlightColor;
+        g.transform.position = new Vector3(g.transform.position.x, g.transform.position.y, -100f);
         return s;
     }
 
@@ -102,11 +112,19 @@ public class StateMachineController : MonoBehaviour
         GameObject g = drawnStates[s];
         g.GetComponent<SpriteRenderer>().color = Color.black;
         g.GetComponentInChildren<TMP_Text>().color = Color.black;
+        g.transform.position = new Vector3(g.transform.position.x, g.transform.position.y, s.id * -0.01f);
     }
 
     public TransitionPrefab SelectTransition(Vector2 pos)
     {
-        return drawnTransitions.Find(x => x.coll.OverlapPoint(pos));
+        TransitionPrefab t = drawnTransitions.Find(x => x.coll.OverlapPoint(pos));
+        if (t == null)
+        {
+            return null;
+        }
+        t.SetColor(Appdata.highlightColor);
+        t.lineRenderer.sortingOrder = -9;
+        return t;
     }
 
     public void DeselectTransition(TransitionPrefab t)
@@ -115,5 +133,8 @@ public class StateMachineController : MonoBehaviour
         {
             return;
         }
+        t.SetColor(Color.black);
+        t.lineRenderer.sortingOrder = -10;
+        t.transform.position = Vector3.zero;
     }
 }

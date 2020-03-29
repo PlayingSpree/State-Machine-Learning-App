@@ -57,29 +57,42 @@ public class StateMachineData
         return s;
     }
 
-    public State ModifyState(int id, Vector2 pos, string name = "")
-    {
-        State s = states.Find(x => x.id == id);
-        s.name = name == "" ? s.name : name;
-        s.pos = pos;
-        return s;
-    }
+    //public State ModifyState(int id, Vector2 pos, string name = "")
+    //{
+    //    State s = states.Find(x => x.id == id);
+    //    s.name = name == "" ? s.name : name;
+    //    s.pos = pos;
+    //    return s;
+    //}
 
-    public State ModifyState(int id, string name)
-    {
-        State s = states.Find(x => x.id == id);
-        s.name = name;
-        return s;
-    }
+    //public State ModifyState(int id, string name)
+    //{
+    //    State s = states.Find(x => x.id == id);
+    //    s.name = name;
+    //    return s;
+    //}
 
-    public void RemoveState(int id)
+    //public void RemoveState(int id)
+    //{
+    //    // Remove state
+    //    states.RemoveAll(x => x.id == id);
+    //    // Delete all related trasitions
+    //    transitions.RemoveAll(x => x.from == id || x.to == id);
+    //    // Initial state?
+    //    if (initialState == id)
+    //    {
+    //        initialState = -1;
+    //    }
+    //}
+
+    public void RemoveState(State s)
     {
         // Remove state
-        states.RemoveAll(x => x.id == id);
+        states.Remove(s);
         // Delete all related trasitions
-        transitions.RemoveAll(x => x.from == id || x.to == id);
+        transitions.RemoveAll(x => x.from == s.id || x.to == s.id);
         // Initial state?
-        if (initialState == id)
+        if (initialState == s.id)
         {
             initialState = -1;
         }
@@ -91,17 +104,22 @@ public class StateMachineData
         transitions.Add(new Transition(from, to, input, id));
     }
 
-    public void ModifyTransition(int id, int from = -1, int to = -1, int input = -1)
-    {
-        Transition obj = transitions.Find(x => x.id == id);
-        obj.from = from == -1 ? obj.from : from;
-        obj.to = to == -1 ? obj.to : to;
-        obj.input = input == -1 ? obj.input : input;
-    }
+    //public void ModifyTransition(int id, int from = -1, int to = -1, int input = -1)
+    //{
+    //    Transition obj = transitions.Find(x => x.id == id);
+    //    obj.from = from == -1 ? obj.from : from;
+    //    obj.to = to == -1 ? obj.to : to;
+    //    obj.input = input == -1 ? obj.input : input;
+    //}
 
-    public void RemoveTransition(int id)
+    //public void RemoveTransition(int id)
+    //{
+    //    transitions.RemoveAll(x => x.id == id);
+    //}
+
+    public void RemoveTransition(Transition t)
     {
-        transitions.RemoveAll(x => x.id == id);
+        transitions.Remove(t);
     }
 
     public void AddInput(int id)
@@ -109,16 +127,16 @@ public class StateMachineData
         inputs.Add(id);
     }
 
-    public void ModifyInput(int index, int id)
-    {
-        inputs[index] = id;
-    }
+    //public void ModifyInput(int index, int id)
+    //{
+    //    inputs[index] = id;
+    //}
 
-    public void RemoveInput(int index)
-    {
-        // Remove Input
-        inputs.RemoveAt(index);
-    }
+    //public void RemoveInput(int index)
+    //{
+    //    // Remove Input
+    //    inputs.RemoveAt(index);
+    //}
 
     public string InputToString(int id)
     {

@@ -17,6 +17,7 @@ public partial class StateMachineEditor : MonoBehaviour
     // Status
     enum EditMode { Edit, AddState, AddTransition, SelectState, SelectTransition }
     EditMode editMode = EditMode.Edit;
+
     StateMachineData.State selectedState = null;
     TransitionPrefab selectedTransition = null;
 
@@ -40,8 +41,10 @@ public partial class StateMachineEditor : MonoBehaviour
                 UpdateAddTransition();
                 break;
             case EditMode.SelectState:
+                UpdateSelectState();
                 break;
             case EditMode.SelectTransition:
+                UpdateSelectTransition();
                 break;
             default:
                 break;
@@ -49,22 +52,41 @@ public partial class StateMachineEditor : MonoBehaviour
     }
 
     // UpdateEdit
-    private void UpdateEdit()
+    private void UpdateEdit(bool ignoreDrag = false)
     {
         if (input.Tap.HasValue)
         {
-            SelectThing(input.Tap.Value);
+            if (SelectThing(input.Tap.Value))
+            {
+                if (selectedState != null)
+                {
+                    ChangeEditMode(EditMode.SelectState, false);
+                }
+                else if (selectedTransition != null)
+                {
+                    ChangeEditMode(EditMode.SelectTransition, false);
+                }
+                else if (editMode != EditMode.Edit)
+                {
+                    ChangeEditMode(EditMode.Edit);
+                }
+            }
+        }
+        if (input.Drag.HasValue && !ignoreDrag)
+        {
+            Camera.main.transform.Translate(-input.Drag.Value * Camera.main.orthographicSize * 2f / Screen.height);
         }
     }
 
-    private void SelectThing(Vector2 pos)
+    private bool SelectThing(Vector2 pos)
     {
         if (!IsInCanvas(pos))
         {
-            return;
+            return false;
         }
 
         smc.DeselectState(selectedState);
+        smc.DeselectTransition(selectedTransition);
         selectedState = null;
 
         Vector2 wp = Camera.main.ScreenToWorldPoint(pos);
@@ -74,6 +96,7 @@ public partial class StateMachineEditor : MonoBehaviour
         {
             selectedTransition = smc.SelectTransition(wp);
         }
+        return true;
     }
 
     // UpdateAddState
@@ -129,21 +152,31 @@ public partial class StateMachineEditor : MonoBehaviour
         }
     }
 
+    // UpdateSelectState
+    private void UpdateSelectState()
+    {
+        UpdateEdit();
+    }
+
+    private void UpdateSelectTransition()
+    {
+        UpdateEdit();
+    }
+
     // Modify State Machine Function
     private void CreateState(Vector2 pos)
     {
-        smc.DrawState(smc.stateMachineData.CreateState("S" + (smc.stateMachineData.states.Count + 1), pos));
-    }
+        string name;
+        if (smc.stateMachineData.states.Count == 0)
+        {
+            name = "S0";
+        }
+        else
+        {
+            name = "S" + (smc.stateMachineData.states[smc.stateMachineData.states.Count - 1].id + 1);
+        }
 
-    private void ModifyState(int id, Vector2 pos)
-    {
-        smc.DrawState(smc.stateMachineData.ModifyState(id, pos));
-        smc.DrawTransitions();
-    }
-
-    private void ModifyState(int id, string name)
-    {
-        smc.DrawState(smc.stateMachineData.ModifyState(id, name));
+        smc.DrawState(smc.stateMachineData.CreateState(name, pos));
     }
 
     private void CreateTransition(int from, int to, int input)
@@ -152,6 +185,17 @@ public partial class StateMachineEditor : MonoBehaviour
         smc.DrawTransitions();
     }
 
+    private void RemoveState(StateMachineData.State s)
+    {
+        smc.stateMachineData.RemoveState(s);
+        smc.UndrawState(s);
+    }
+
+    private void RemoveTransition(TransitionPrefab t)
+    {
+        smc.stateMachineData.transitions.FindAll(x => x.from == t.transition.from && x.to == t.transition.to).ForEach(x => smc.stateMachineData.RemoveTransition(x));
+        smc.DrawTransitions();
+    }
     // UI
     public void SelectButton()
     {
@@ -166,6 +210,18 @@ public partial class StateMachineEditor : MonoBehaviour
     {
         ChangeEditMode(EditMode.AddTransition);
     }
+    public void RemoveButton()
+    {
+        if (selectedState != null)
+        {
+            RemoveState(selectedState);
+        }
+        else if (selectedTransition != null)
+        {
+            RemoveTransition(selectedTransition);
+        }
+        ChangeEditMode(EditMode.Edit);
+    }
     public bool IsInCanvas(Vector2 pos)
     {
         if (pos.y < Screen.height * canvasBottom)
@@ -178,17 +234,21 @@ public partial class StateMachineEditor : MonoBehaviour
         }
         return true;
     }
-    private void ChangeEditMode(EditMode editMode)
+    private void ChangeEditMode(EditMode editMode, bool deselect = true)
     {
-        smc.DeselectState(selectedState);
-        selectedState = null;
-        smc.DeselectTransition(selectedTransition);
-        selectedTransition = null;
+        if (deselect)
+        {
+            smc.DeselectState(selectedState);
+            selectedState = null;
+            smc.DeselectTransition(selectedTransition);
+            selectedTransition = null;
+        }
         switch (editMode)
         {
             case EditMode.Edit:
                 this.editMode = EditMode.Edit;
                 animator.SetTrigger("Cancle");
+                tooltip.SetText("Tap to select a state or transition.");
                 break;
             case EditMode.AddState:
                 this.editMode = EditMode.AddState;
@@ -201,8 +261,14 @@ public partial class StateMachineEditor : MonoBehaviour
                 tooltip.SetText("Tap to add a new transition.");
                 break;
             case EditMode.SelectState:
+                this.editMode = EditMode.SelectState;
+                animator.SetTrigger("SelectState");
+                tooltip.SetText("Drag the selected state to move.");
                 break;
             case EditMode.SelectTransition:
+                this.editMode = EditMode.SelectTransition;
+                animator.SetTrigger("SelectTransition");
+                tooltip.SetText("");
                 break;
             default:
                 break;

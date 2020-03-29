@@ -7,15 +7,18 @@ public class InputHandler
     // Output
     private Vector2? tap;
     private Vector2? hold;
+    private Vector2? drag;
     // Getters
     public Vector2? Tap => tap;
     public Vector2? Hold => hold;
+    public Vector2? Drag => drag;
     // Update : pls call every frame
     public void Update()
     {
         // Reset Output
         tap = null;
         hold = null;
+        drag = null;
         // Update Output
         UpdateTouch();
         UpdateMouse();
@@ -34,6 +37,7 @@ public class InputHandler
     }
     float mouseTime;
     Vector2 mousePosStart;
+    Vector2 mousePosLast;
     private void UpdateMouse()
     {
         if (Input.GetKeyDown(KeyCode.Mouse0))
@@ -44,18 +48,27 @@ public class InputHandler
         if (Input.GetKey(KeyCode.Mouse0))
         {
             mouseTime += Time.deltaTime;
-            // Hold
+            // Is Hold?
             if (mouseTime > 1f)
             {
+                // Hold
                 hold = Input.mousePosition;
                 // Set to -inf to Trigger hold once
+                mouseTime = float.NegativeInfinity;
+            }
+            // Move
+            if (Vector2.Distance(mousePosStart, Input.mousePosition) >= 5f)
+            {
+                // Drag
+                drag = (Vector2)Input.mousePosition - mousePosLast;
+                // Not Hold
                 mouseTime = float.NegativeInfinity;
             }
         }
         if (Input.GetKeyUp(KeyCode.Mouse0))
         {
             // Not Move
-            if (Vector2.Distance(mousePosStart, Input.mousePosition) < 10f)
+            if (Vector2.Distance(mousePosStart, Input.mousePosition) < 5f)
             {
                 // Not Hold
                 if (mouseTime >= 0)
@@ -65,5 +78,6 @@ public class InputHandler
                 }
             }
         }
+        mousePosLast = Input.mousePosition;
     }
 }

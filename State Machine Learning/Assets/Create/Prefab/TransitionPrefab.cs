@@ -9,12 +9,11 @@ public class TransitionPrefab : MonoBehaviour
     public LineRenderer lineRenderer;
     public TMPro.TMP_Text text;
     public BoxCollider2D coll;
-    public int from, to;
+    public StateMachineData.Transition transition;
 
-    public void set(Vector2 start, Vector2 end, string s, int from, int to)
+    public void Set(Vector2 start, Vector2 end, string s, StateMachineData.Transition t)
     {
-        this.from = from;
-        this.to = to;
+        transition = t;
 
         text.SetText(s);
 
@@ -22,6 +21,7 @@ public class TransitionPrefab : MonoBehaviour
         Vector2 e = Vector2.MoveTowards(end, start, Appdata.circleSize + (Appdata.arrowSize / 2f));
         lineRenderer.positionCount = 2;
         lineRenderer.SetPositions(new Vector3[] { start, e });
+        lineRenderer.sortingOrder = -10;
 
         // Arrow Pos
         e = Vector2.MoveTowards(e, start, Appdata.arrowSize / 2f);
@@ -57,5 +57,13 @@ public class TransitionPrefab : MonoBehaviour
     public void AddText(string s)
     {
         text.SetText(string.Join(",", text.text, s));
+    }
+    public void SetColor(Color c)
+    {
+        arrow.GetComponent<SpriteRenderer>().color = c;
+        text.color = c;
+        Gradient g = new Gradient();
+        g.SetKeys(new GradientColorKey[] { new GradientColorKey(c, 0f), new GradientColorKey(c, 1f) }, lineRenderer.colorGradient.alphaKeys);
+        lineRenderer.colorGradient = g;
     }
 }
