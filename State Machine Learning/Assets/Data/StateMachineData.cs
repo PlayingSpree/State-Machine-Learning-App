@@ -52,6 +52,7 @@ public class StateMachineData
     public State CreateState(string name, Vector2 pos)
     {
         int id = states.Count == 0 ? 0 : states[states.Count - 1].id + 1;
+        initialState = states.Count == 0 ? 0 : initialState;
         State s = new State(name, id, pos);
         states.Add(s);
         return s;

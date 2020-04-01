@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 public class StateMachineController : MonoBehaviour
 {
@@ -22,13 +23,20 @@ public class StateMachineController : MonoBehaviour
         stateMachineData.states.ForEach(DrawState);
         DrawTransitions();
     }
-    public void DrawState(StateMachineData.State state)
+
+    private void DrawState(StateMachineData.State state)
     {
         // Draw
         GameObject o = Instantiate(statePrefab);
         o.transform.position = (Vector3)state.pos + (Vector3.back * state.id * 0.01f);
         TMP_Text t = o.GetComponentInChildren<TMP_Text>();
         t.SetText(state.name);
+
+        if (state.id == stateMachineData.initialState)
+        {
+            o.transform.Find("InitialStateArrow").gameObject.SetActive(true);
+        }
+
 
         // Remove old and add new obj to list
         GameObject old;
@@ -41,6 +49,13 @@ public class StateMachineController : MonoBehaviour
         {
             drawnStates.Add(state, o);
         }
+    }
+
+    public void DrawState(StateMachineData.State state, bool selected = false)
+    {
+        DrawState(state);
+        if (selected)
+            ColorSelectedState(state);
     }
 
     public void UndrawState(StateMachineData.State state)
@@ -95,12 +110,17 @@ public class StateMachineController : MonoBehaviour
         {
             return null;
         }
+        ColorSelectedState(s);
+        return s;
+    }
+
+    private void ColorSelectedState(StateMachineData.State s)
+    {
         // Change Color
         GameObject g = drawnStates[s];
         g.GetComponent<SpriteRenderer>().color = Appdata.highlightColor;
         g.GetComponentInChildren<TMP_Text>().color = Appdata.highlightColor;
         g.transform.position = new Vector3(g.transform.position.x, g.transform.position.y, -100f);
-        return s;
     }
 
     public void DeselectState(StateMachineData.State s)

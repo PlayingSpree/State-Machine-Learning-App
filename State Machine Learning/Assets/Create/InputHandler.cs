@@ -8,10 +8,12 @@ public class InputHandler
     private Vector2? tap;
     private Vector2? hold;
     private Vector2? drag;
+    private Vector2? lastPos;
     // Getters
     public Vector2? Tap => tap;
     public Vector2? Hold => hold;
     public Vector2? Drag => drag;
+    public Vector2? LastPos => lastPos;
     // Update : pls call every frame
     public void Update()
     {
@@ -19,6 +21,7 @@ public class InputHandler
         tap = null;
         hold = null;
         drag = null;
+        lastPos = null;
         // Update Output
         UpdateTouch();
         UpdateMouse();
@@ -64,6 +67,8 @@ public class InputHandler
                 // Not Hold
                 mouseTime = float.NegativeInfinity;
             }
+            // lastPos
+            lastPos = mousePosLast;
         }
         if (Input.GetKeyUp(KeyCode.Mouse0))
         {

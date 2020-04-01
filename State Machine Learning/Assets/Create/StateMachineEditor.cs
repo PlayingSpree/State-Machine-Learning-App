@@ -155,7 +155,20 @@ public partial class StateMachineEditor : MonoBehaviour
     // UpdateSelectState
     private void UpdateSelectState()
     {
-        UpdateEdit();
+        UpdateEdit(true);
+        if (input.Drag.HasValue)
+        {
+            if (Vector2.Distance(selectedState.pos, Camera.main.ScreenToWorldPoint(input.LastPos.Value)) < Appdata.circleSize)
+            {
+                selectedState.pos += input.Drag.Value * Camera.main.orthographicSize * 2f / Screen.height;
+                smc.DrawState(selectedState, true);
+                smc.DrawTransitions();
+            }
+            else
+            {
+                Camera.main.transform.Translate(-input.Drag.Value * Camera.main.orthographicSize * 2f / Screen.height);
+            }
+        }
     }
 
     private void UpdateSelectTransition()
@@ -221,6 +234,27 @@ public partial class StateMachineEditor : MonoBehaviour
             RemoveTransition(selectedTransition);
         }
         ChangeEditMode(EditMode.Edit);
+    }
+    public void SetInitialButton()
+    {
+        if (smc.stateMachineData.initialState == -1)
+        {
+            smc.stateMachineData.initialState = selectedState.id;
+        }
+        else
+        {
+            if (smc.stateMachineData.initialState == selectedState.id)
+            {
+                smc.stateMachineData.initialState = -1;
+            }
+            else
+            {
+                int old = smc.stateMachineData.initialState;
+                smc.stateMachineData.initialState = selectedState.id;
+                smc.DrawState(smc.stateMachineData.states.Find(x => x.id == old));
+            }
+        }
+        smc.DrawState(selectedState, true);
     }
     public bool IsInCanvas(Vector2 pos)
     {
