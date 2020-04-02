@@ -96,7 +96,7 @@ public class StateMachineController : MonoBehaviour
             sameTransition.RemoveAt(0);
             foreach (StateMachineData.Transition item in sameTransition)
             {
-                t.AddText(stateMachineData.InputToString(item.input));
+                t.AddText(stateMachineData.InputToString(item.input), item);
             }
 
             drawnTransitions.Add(t);

@@ -9,11 +9,11 @@ public class TransitionPrefab : MonoBehaviour
     public LineRenderer lineRenderer;
     public TMPro.TMP_Text text;
     public BoxCollider2D coll;
-    public StateMachineData.Transition transition;
+    public List<StateMachineData.Transition> transitions = new List<StateMachineData.Transition>();
 
     public void Set(Vector2 start, Vector2 end, string s, StateMachineData.Transition t)
     {
-        transition = t;
+        transitions.Add(t);
 
         text.SetText(s);
 
@@ -54,8 +54,9 @@ public class TransitionPrefab : MonoBehaviour
         // Coll Rot
         coll.gameObject.transform.rotation = Quaternion.Euler(0f, 0f, textRot);
     }
-    public void AddText(string s)
+    public void AddText(string s, StateMachineData.Transition t)
     {
+        transitions.Add(t);
         text.SetText(string.Join(",", text.text, s));
     }
     public void SetColor(Color c)

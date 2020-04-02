@@ -9,6 +9,8 @@ public partial class StateMachineEditor : MonoBehaviour
     InputHandler input = new InputHandler();
     public Animator animator;
     public TMPro.TMP_Text tooltip;
+    public TMPro.TMP_InputField stateNameInput;
+    public SquareList transfromList;
 
     // UI Ref
     const float canvasBottom = 160f / 1920f;
@@ -17,40 +19,47 @@ public partial class StateMachineEditor : MonoBehaviour
     // Status
     enum EditMode { Edit, AddState, AddTransition, SelectState, SelectTransition }
     EditMode editMode = EditMode.Edit;
-
     StateMachineData.State selectedState = null;
     TransitionPrefab selectedTransition = null;
+    public bool PopupMode { get; set; } = false;
 
+    #region Unity
     private void Start()
     {
         smc = GetComponent<StateMachineController>();
+        ChangeEditMode(EditMode.Edit);
     }
 
     private void Update()
     {
-        input.Update();
-        switch (editMode)
+        if (!PopupMode)
         {
-            case EditMode.Edit:
-                UpdateEdit();
-                break;
-            case EditMode.AddState:
-                UpdateAddState();
-                break;
-            case EditMode.AddTransition:
-                UpdateAddTransition();
-                break;
-            case EditMode.SelectState:
-                UpdateSelectState();
-                break;
-            case EditMode.SelectTransition:
-                UpdateSelectTransition();
-                break;
-            default:
-                break;
+            input.Update();
+            switch (editMode)
+            {
+                case EditMode.Edit:
+                    UpdateEdit();
+                    break;
+                case EditMode.AddState:
+                    UpdateAddState();
+                    break;
+                case EditMode.AddTransition:
+                    UpdateAddTransition();
+                    break;
+                case EditMode.SelectState:
+                    UpdateSelectState();
+                    break;
+                case EditMode.SelectTransition:
+                    UpdateSelectTransition();
+                    break;
+                default:
+                    break;
+            }
         }
     }
+    #endregion
 
+    #region Update
     // UpdateEdit
     private void UpdateEdit(bool ignoreDrag = false)
     {
@@ -206,9 +215,12 @@ public partial class StateMachineEditor : MonoBehaviour
 
     private void RemoveTransition(TransitionPrefab t)
     {
-        smc.stateMachineData.transitions.FindAll(x => x.from == t.transition.from && x.to == t.transition.to).ForEach(x => smc.stateMachineData.RemoveTransition(x));
+        smc.stateMachineData.transitions.FindAll(x => x.from == t.transitions[0].from && x.to == t.transitions[0].to).ForEach(x => smc.stateMachineData.RemoveTransition(x));
         smc.DrawTransitions();
     }
+    #endregion
+
+    #region UI
     // UI
     public void SelectButton()
     {
@@ -256,6 +268,45 @@ public partial class StateMachineEditor : MonoBehaviour
         }
         smc.DrawState(selectedState, true);
     }
+    // Popup
+    public void SetStateNamePopup()
+    {
+        PopupMode = true;
+        stateNameInput.SetTextWithoutNotify(selectedState.name);
+        stateNameInput.placeholder.GetComponent<TMPro.TMP_Text>().SetText(selectedState.name);
+    }
+    public void SetStateNameOKButton()
+    {
+        if (stateNameInput.text.Trim() != "")
+        {
+            selectedState.name = stateNameInput.text;
+            smc.DrawState(selectedState, true);
+        }
+        PopupMode = false;
+    }
+    public void TransitionEditPopup()
+    {
+        PopupMode = true;
+        Dictionary<string, object> d = new Dictionary<string, object>();
+        foreach (StateMachineData.Transition item in selectedTransition.transitions)
+        {
+            d.Add(smc.stateMachineData.InputToString(item.input), item);
+        }
+        transfromList.SetButtons(d, TransitionEditListButton);
+    }
+    public void TransitionEditAddButton()
+    {
+        Debug.Log("Add");
+    }
+    public void TransitionEditListButton()
+    {
+        Debug.Log("Ez");
+    }
+    public void TransitionEditOKButton()
+    {
+        PopupMode = false;
+    }
+    // Helper
     public bool IsInCanvas(Vector2 pos)
     {
         if (pos.y < Screen.height * canvasBottom)
@@ -308,5 +359,6 @@ public partial class StateMachineEditor : MonoBehaviour
                 break;
         }
     }
+    #endregion
 }
 
