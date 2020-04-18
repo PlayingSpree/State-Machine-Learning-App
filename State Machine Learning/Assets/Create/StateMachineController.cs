@@ -17,13 +17,20 @@ public class StateMachineController : MonoBehaviour
     public GameObject statePrefab;
     public GameObject transitionPrefab;
 
+    // Test
+    int currentState = -1;
+    private int currentInput = -1;
+    public int CurrentInput => currentInput;
+
+    List<int> testStateHistory = new List<int>();
+
     private void Start()
     {
         // Draw all
         stateMachineData.states.ForEach(DrawState);
         DrawTransitions();
     }
-
+    #region Drawing
     private void DrawState(StateMachineData.State state)
     {
         // Draw
@@ -36,7 +43,6 @@ public class StateMachineController : MonoBehaviour
         {
             o.transform.Find("InitialStateArrow").gameObject.SetActive(true);
         }
-
 
         // Remove old and add new obj to list
         GameObject old;
@@ -114,12 +120,13 @@ public class StateMachineController : MonoBehaviour
         return s;
     }
 
-    private void ColorSelectedState(StateMachineData.State s)
+    private void ColorSelectedState(StateMachineData.State s, Color? c = null)
     {
+        c = c ?? Appdata.highlightColor;
         // Change Color
         GameObject g = drawnStates[s];
-        g.GetComponent<SpriteRenderer>().color = Appdata.highlightColor;
-        g.GetComponentInChildren<TMP_Text>().color = Appdata.highlightColor;
+        g.GetComponent<SpriteRenderer>().color = c.Value;
+        g.GetComponentInChildren<TMP_Text>().color = c.Value;
         g.transform.position = new Vector3(g.transform.position.x, g.transform.position.y, -100f);
     }
 
@@ -147,6 +154,18 @@ public class StateMachineController : MonoBehaviour
         return t;
     }
 
+    public TransitionPrefab SelectTransition(int from, int to)
+    {
+        TransitionPrefab t = drawnTransitions.Find(x => x.transitions.Exists(y => y.from == from && y.to == to));
+        if (t == null)
+        {
+            return null;
+        }
+        t.SetColor(Appdata.highlightColor);
+        t.lineRenderer.sortingOrder = -9;
+        return t;
+    }
+
     public void DeselectTransition(TransitionPrefab t)
     {
         if (t == null)
@@ -155,6 +174,84 @@ public class StateMachineController : MonoBehaviour
         }
         t.SetColor(Color.black);
         t.lineRenderer.sortingOrder = -10;
-        t.transform.position = Vector3.zero;
     }
+    #endregion
+
+    #region Testing
+    public void TestClear()
+    {
+        currentState = stateMachineData.initialState;
+        currentInput = -1;
+        testStateHistory.Clear();
+        stateMachineData.states.ForEach(DeselectState);
+    }
+    public void TestReset()
+    {
+        TestClear();
+        ColorSelectedState(stateMachineData.states.Find(x => x.id == currentState));
+    }
+    public TestStatus TestNextState()
+    {
+        testStateHistory.Add(currentState);
+        currentInput += 1;
+        // Check Input
+        if (stateMachineData.inputs.Count == 0)
+        {
+            return TestStatus.EoI_Empty;
+        }
+        // Find Transition
+        var allT = stateMachineData.transitions.FindAll(x => x.from == currentState && x.input == stateMachineData.inputs[currentInput]);
+        // Check Transition
+        if (allT.Count > 1)
+        {
+            ColorSelectedState(stateMachineData.states.Find(x => x.id == currentState), Appdata.errorColor);
+            return TestStatus.TransitionError_Multiple;
+        }
+        else if (allT.Count == 0)
+        {
+            ColorSelectedState(stateMachineData.states.Find(x => x.id == currentState), Appdata.errorColor);
+            return TestStatus.TransitionError_None;
+        }
+        else
+        {
+            DeselectState(stateMachineData.states.Find(x => x.id == currentState));
+
+            currentState = allT[0].to;
+            ColorSelectedState(stateMachineData.states.Find(x => x.id == currentState));
+
+            if (currentInput == stateMachineData.inputs.Count - 1)
+            {
+                return TestStatus.EoI;
+            }
+            else
+            {
+                return TestStatus.Normal;
+            }
+        }
+    }
+    public TestStatus TestBackState()
+    {
+        DeselectState(stateMachineData.states.Find(x => x.id == currentState));
+
+        currentState = testStateHistory[currentInput];
+        testStateHistory.RemoveAt(currentInput--);
+
+        ColorSelectedState(stateMachineData.states.Find(x => x.id == currentState));
+
+        if (currentInput == -1)
+        {
+            return TestStatus.SoI;
+        }
+        return TestStatus.Normal;
+    }
+    public enum TestStatus
+    {
+        Normal,
+        TransitionError_Multiple,
+        TransitionError_None,
+        EoI,
+        EoI_Empty,
+        SoI
+    }
+    #endregion
 }

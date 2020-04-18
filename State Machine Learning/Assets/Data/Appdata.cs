@@ -9,4 +9,7 @@ public static class Appdata
     public const float arrowSize = 0.225f; // (0.3 * 3/4)
     // Color const
     public static readonly Color highlightColor = new Color(0.1490196f, 0.6f, 0.9843137f);
+    public static readonly Color errorColor = new Color(251f / 255f, 38f / 255f, 38 / 255f);
+    // Project Setting
+    public static float testRunningTime = 1f;
 }

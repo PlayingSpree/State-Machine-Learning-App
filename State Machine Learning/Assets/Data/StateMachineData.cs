@@ -7,6 +7,7 @@ public class StateMachineData
 {
     // Meta Data
     public List<Input> inputsData = new List<Input>();
+    public string meta_name = "New State Machine";
 
     // State Machine Data
     public List<State> states = new List<State>();
@@ -19,6 +20,7 @@ public class StateMachineData
     {
         inputsData.Add(new Input("A", 0));
         inputsData.Add(new Input("B", 1));
+        inputsData.Add(new Input("C", 2));
         states.Add(new State("S0", 0, Vector2.left * 1.5f));
         states.Add(new State("S1", 1, Vector2.right * 1.5f));
         transitions.Add(new Transition(0, 1, 0, 0));

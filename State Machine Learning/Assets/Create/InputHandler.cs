@@ -8,11 +8,14 @@ public class InputHandler
     private Vector2? tap;
     private Vector2? hold;
     private Vector2? drag;
+    private Vector2? dragStart;
     private Vector2? lastPos;
+
     // Getters
     public Vector2? Tap => tap;
     public Vector2? Hold => hold;
     public Vector2? Drag => drag;
+    public Vector2? DragStart => dragStart;
     public Vector2? LastPos => lastPos;
     // Update : pls call every frame
     public void Update()
@@ -63,6 +66,7 @@ public class InputHandler
             if (Vector2.Distance(mousePosStart, Input.mousePosition) >= 5f)
             {
                 // Drag
+                dragStart = mousePosStart;
                 drag = (Vector2)Input.mousePosition - mousePosLast;
                 // Not Hold
                 mouseTime = float.NegativeInfinity;
